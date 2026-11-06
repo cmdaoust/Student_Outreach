@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Skin Response Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen instrument. Fixed top bar with run clock, a centred stimulus stage, step rail at the foot. Deliberately single dark theme so the flash and the stage read the same on every phone. */
+:root{
+  --bg:#131722; --surface:#1b2130; --line:#2a3245;
+  --fg:#e8ecf2; --muted:#94a0b5;
+  --amber:#ffc857; --calm:#7fd1b9; --alarm:#ff7a6b;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{min-height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.brand b{color:var(--amber);font-weight:500}
+.clock{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px;color:var(--fg)}
+.clock span{color:var(--muted);font-size:11px;letter-spacing:.1em;margin-right:6px}
+main{flex:1;display:flex;flex-direction:column;width:100%;max-width:560px;margin:0 auto;padding-block:24px 32px}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:12px 16px;min-height:48px}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button.primary{background:var(--amber);color:#1a1405;border-color:var(--amber);font-weight:600;font-size:18px}
+button.ghost{background:transparent}
+button.small{min-height:36px;padding:6px 12px;font-size:14px}
+
+/* Intro */
+.intro{display:flex;flex-direction:column;gap:24px}
+.intro h1{font-size:clamp(34px,9vw,48px);line-height:1.05}
+.lead{color:var(--muted);margin:8px 0 0;max-width:60ch}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.checks li{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;padding:14px;background:var(--surface);border-radius:12px}
+.checks li i{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--amber);display:grid;place-items:center;font-style:normal;font-family:var(--mono);font-size:13px;color:var(--amber)}
+.checks strong{display:block;font-weight:600}
+.checks span{color:var(--muted);font-size:14px}
+.actions{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+details{border-top:1px solid var(--line);padding-top:16px}
+summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.notes{display:grid;gap:14px;margin-top:16px;font-size:14px}
+.notes p{margin:0}
+.notes h3{margin:0 0 4px;font-size:14px;font-weight:600;color:var(--amber)}
+.toggles{display:grid;gap:8px}
+.toggles label{display:flex;gap:10px;align-items:center}
+.toggles input{width:20px;height:20px;accent-color:var(--amber)}
+.pad{display:flex;flex-wrap:wrap;gap:8px}
+.timeline{font-family:var(--mono);font-size:12px;color:var(--muted);overflow-x:auto;white-space:nowrap}
+
+/* Run */
+.run{flex:1;display:flex;flex-direction:column;gap:20px;text-align:center}
+.tag{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.stage{flex:1;min-height:220px;display:grid;place-items:center;position:relative}
+.orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--calm),transparent 70%);border:2px solid var(--calm);opacity:.85;transform:scale(1);transition:transform 3s cubic-bezier(.2,.7,.2,1),border-color .4s,opacity .4s}
+.orb.in{transform:scale(1.9);border-color:var(--amber)}
+.orb.hold{transform:scale(1.9);border-color:var(--amber);transition-duration:.2s}
+.orb.out{transform:scale(1);transition-duration:4s}
+.orb.dot{width:14px;height:14px;background:var(--fg);border:none;transform:none;opacity:1}
+.orb.hide{opacity:0;visibility:hidden;transition:none}
+.big{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(56px,20vw,96px);line-height:1;color:var(--fg)}
+.seq{font-family:var(--mono);font-size:clamp(22px,6vw,30px);color:var(--amber);font-variant-numeric:tabular-nums}
+.run h2{font-size:clamp(26px,7vw,36px);line-height:1.15}
+.sub{color:var(--muted);margin:-8px auto 0;max-width:40ch;min-height:1.5em}
+.progress{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--calm)}
+.progress.hidden{visibility:hidden}
+.steps{list-style:none;margin:0;padding:0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.steps li{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;color:var(--muted);border:1px solid var(--line)}
+.steps li.now{color:var(--bg);background:var(--amber);border-color:var(--amber)}
+.steps li.done{color:var(--calm);border-color:transparent}
+.marker{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:18px}
+.marker b{color:var(--alarm);font-weight:500}
+
+/* Done */
+.done{display:flex;flex-direction:column;gap:20px}
+.done h2{font-size:clamp(28px,8vw,40px)}
+.tablewrap{overflow-x:auto;background:var(--surface);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:400}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+
+/* Explainers */
+.learn{display:grid;gap:12px;padding:20px;background:var(--surface);border-radius:16px}
+.learn h2,.explain h2{font-size:clamp(24px,6.5vw,32px);line-height:1.15}
+.prose p{margin:0 0 12px;max-width:62ch}
+.prose p:last-child{margin-bottom:0}
+.prose em{font-style:normal;color:var(--amber)}
+.curve{width:100%;max-width:100%;height:auto;display:block;margin-block:4px 8px}
+.curve text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.explain{display:flex;flex-direction:column;gap:16px}
+.trace-note{border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;color:var(--muted)}
+.trace-note strong{color:var(--fg);font-weight:600}
+.trace-note b{font-family:var(--mono);font-weight:500;color:var(--alarm);font-variant-numeric:tabular-nums}
+
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:50}
+#flash.on{opacity:1}
+
+@media (prefers-reduced-motion:reduce){.orb{transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="bar">
+    <div class="brand"><b>●</b> EDA demo</div>
+    <div class="clock" id="clock"><span>RUN</span>00:00.0</div>
+    <button class="small ghost" id="stopBtn" hidden>Stop</button>
+  </div>
+
+  <main>
+    <!-- INTRO -->
+    <section class="intro" id="intro">
+      <div>
+        <h1>Make your skin talk</h1>
+        <p class="lead">A short sequence, about 4 minutes, designed to make your skin conductance jump. Follow what the screen says and keep the sensor hand still.</p>
+      </div>
+      <div class="learn prose">
+        <div class="tag">Read this while you get set up</div>
+        <h2>What is skin conductance?</h2>
+        <p>Your palms and fingertips are packed with sweat glands, hundreds in every square centimetre. They are not only there to cool you down. They are wired to your <em>sympathetic nervous system</em>, the part of your nervous system behind the “fight or flight” reaction.</p>
+        <p>When something grabs your attention, surprises you or stresses you, your brain sends a quick signal to these glands. They push a tiny amount of sweat up into their ducts, usually far too little for you to notice.</p>
+        <p>Sweat is salty water, and salty water conducts electricity. The sensors on your fingers pass a very small current through your skin, far too small to feel, and measure how easily it flows. That is your <em>skin conductance</em>, measured in microsiemens (µS).</p>
+        <svg class="curve" viewBox="0 0 320 130" role="img" aria-label="Diagram of a skin conductance response: a flat line, a trigger, a short delay, a quick rise to a peak, then a slow fall.">
+          <line x1="20" y1="104" x2="312" y2="104" stroke="var(--line)" stroke-width="1"/>
+          <line x1="20" y1="14" x2="20" y2="104" stroke="var(--line)" stroke-width="1"/>
+          <text x="24" y="20">µS</text>
+          <text x="282" y="120">time</text>
+          <line x1="80" y1="22" x2="80" y2="104" stroke="var(--alarm)" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="58" y="16" style="fill:var(--alarm)">trigger</text>
+          <path d="M20 90 L112 90 C126 90 134 36 150 36 C186 36 214 76 312 84" fill="none" stroke="var(--calm)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="80" y1="97" x2="112" y2="97" stroke="var(--muted)" stroke-width="1"/>
+          <text x="76" y="120">1–3 s delay</text>
+          <text x="140" y="28">peak</text>
+          <text x="204" y="34">fades over 10–20 s</text>
+        </svg>
+      </div>
+      <ol class="checks">
+        <li><i>1</i><div><strong>Rest the sensor hand</strong><span>Palm up on your leg or the table. Keep it relaxed and still the whole time.</span></div></li>
+        <li><i>2</i><div><strong>Hold the phone in your other hand</strong><span>Not up to your ear.</span></div></li>
+        <li><i>3</i><div><strong>Sound on, volume up</strong><span>On an iPhone, switch off silent mode too. Tap “Test sound” to check.</span></div></li>
+      </ol>
+      <div class="actions">
+        <button id="testBtn">Test sound</button>
+        <button class="primary" id="startBtn">Start</button>
+      </div>
+      <p class="hint" id="testHint">The screen stays on while the sequence runs.</p>
+
+      <details id="presenter">
+        <summary>For the presenter</summary>
+        <div class="notes">
+          <div>
+            <h3>Sequence</h3>
+            <div class="timeline">Settle 15 s → Breath instructions 18 s → Deep breath → Recover 20 s → Relax (unannounced noise at 6–14 s) → Recover 20 s → Settle 8 s → Maths test announced, 15 s countdown (anticipation) → “Just kidding!” reveal, no maths → Recover 25 s. A tap-through explanation page follows the breath, the noise and the maths, so the clock keeps running while people read.</div>
+          </div>
+          <div>
+            <h3>What to look for</h3>
+            <p>A phasic rise starting 1–3 s after each marker, peaking 2–5 s later and recovering over 10–20 s. The deep breath and the noise give the sharpest, most reliable peaks. The maths announcement gives a peak at the marker, often followed by a slower climb during the countdown as anticipation builds. Marker times are listed at the end of the run.</p>
+          </div>
+          <div>
+            <h3>Getting good signals</h3>
+            <p>Let electrodes sit for a few minutes before starting. Cold hands give flat traces, so warm them first. A small share of people barely respond at all. If someone is flat, try the deep breath again on its own.</p>
+          </div>
+          <div>
+            <h3>The noise</h3>
+            <p>Half a second of white noise at full phone volume, with a white screen flash. It is startling but not harmful at phone-speaker level. The participant page never mentions it, so skip it for anyone who would rather not be startled.</p>
+          </div>
+          <div class="toggles">
+            <label><input type="checkbox" id="optNoise" checked> Include the surprise noise in the full run</label>
+            <label><input type="checkbox" id="optFlash" checked> Flash the screen with the noise</label>
+          </div>
+          <div>
+            <h3>Run one part</h3>
+            <div class="pad">
+              <button class="small" data-solo="breath">Deep breath</button>
+              <button class="small" data-solo="maths">Mental maths</button>
+              <button class="small" data-solo="surprise">Surprise noise</button>
+              <button class="small" data-solo="clap">Name-call</button>
+            </div>
+            <p class="hint" style="margin-top:8px">Name-call: the screen tells the participant to wait, then at a random moment shows a large prompt for <em>you</em> to clap or say their name loudly.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- RUN -->
+    <section class="run" id="run" hidden>
+      <div class="tag" id="tag">Settle</div>
+      <div class="stage">
+        <div class="orb" id="orb"></div>
+        <div id="stageText" style="position:absolute;display:grid;gap:8px;justify-items:center"></div>
+      </div>
+      <h2 id="title">Sit still and breathe normally</h2>
+      <p class="sub" id="sub"></p>
+      <div class="progress" id="progress"><i id="bar"></i></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="marker" id="marker"></div>
+    </section>
+
+    <!-- EXPLAIN -->
+    <section class="explain" id="explain" hidden>
+      <div class="tag">What just happened</div>
+      <h2 id="exTitle"></h2>
+      <div class="prose" id="exBody"></div>
+      <div class="trace-note" id="exTrace"></div>
+      <button class="primary" id="nextBtn">Next</button>
+    </section>
+
+    <!-- DONE -->
+    <section class="done" id="done" hidden>
+      <div>
+        <div class="tag" style="margin-bottom:8px">Finished</div>
+        <h2>Now look at your trace</h2>
+        <p class="lead">Each event below should line up with a peak a couple of seconds later. Which one gave you the biggest jump?</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>#</th><th>Event</th><th>Run time</th><th>Clock</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button id="homeBtn">Back</button>
+        <button class="primary" id="againBtn">Run again</button>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="flash"></div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  let ctx = null, runId = 0, t0 = 0, log = [], raf = 0, wakeLock = null, tickTimer = 0;
+
+  /* ---------- audio ---------- */
+  function audioInit(){
+    try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+    if(!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; ctx = new AC(); }
+    if(ctx.state === 'suspended') ctx.resume();
+    const b = ctx.createBuffer(1,1,22050), s = ctx.createBufferSource();
+    s.buffer = b; s.connect(ctx.destination); s.start(0);
+  }
+  function tone(freq, dur, vol){
+    if(!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t+0.005);
+    g.gain.setValueAtTime(vol, t+dur-0.01); g.gain.linearRampToValueAtTime(0, t+dur);
+    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+dur+0.02);
+  }
+  function noiseBurst(dur){
+    if(!ctx) return;
+    const n = Math.floor(ctx.sampleRate*dur), buf = ctx.createBuffer(2, n, ctx.sampleRate);
+    for(let c=0;c<2;c++){ const d = buf.getChannelData(c); for(let i=0;i<n;i++) d[i] = Math.random()*2-1; }
+    const src = ctx.createBufferSource(), g = ctx.createGain(), t = ctx.currentTime;
+    src.buffer = buf;
+    g.gain.setValueAtTime(1, t);                      // instant onset: the fast rise is what startles
+    g.gain.setValueAtTime(1, t+dur-0.03); g.gain.linearRampToValueAtTime(0, t+dur);
+    src.connect(g).connect(ctx.destination); src.start(t);
+  }
+  function flash(){
+    if(!$('#optFlash').checked) return;
+    const f = $('#flash'); f.classList.add('on');
+    setTimeout(()=>f.classList.remove('on'), 160);
+  }
+
+  /* ---------- clock + markers ---------- */
+  const fmt = ms => { const s = Math.max(0,ms)/1000, m = Math.floor(s/60); return String(m).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0'); };
+  const wall = d => d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  function startClock(){ cancelAnimationFrame(raf); const loop=()=>{ $('#clock').innerHTML='<span>RUN</span>'+fmt(performance.now()-t0); raf=requestAnimationFrame(loop); }; loop(); }
+  function mark(name){
+    const el = performance.now()-t0, w = new Date();
+    log.push({name, el, w});
+    $('#marker').innerHTML = '<b>▲ Marker '+log.length+'</b> · '+name+' · '+fmt(el)+' · '+wall(w);
+  }
+
+  /* ---------- run engine ---------- */
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function check(id){ if(id !== runId) throw 'stopped'; }
+
+  async function phase(id, o){
+    check(id);
+    if(o.tag) $('#tag').textContent = o.tag;
+    $('#title').textContent = o.title || '';
+    $('#sub').textContent = o.sub || '';
+    const orb = $('#orb'); orb.className = 'orb ' + (o.visual || 'hide');
+    $('#stageText').innerHTML = o.stage || '';
+    const p = $('#progress'), bar = $('#bar');
+    p.classList.toggle('hidden', !!o.hideBar);
+    bar.style.transition = 'none'; bar.style.width = '0';
+    void bar.offsetWidth;
+    bar.style.transition = 'width '+o.dur+'ms linear'; bar.style.width = '100%';
+    if(o.count){
+      const n = Math.round(o.dur/1000);
+      for(let i=n;i>0;i--){ check(id); $('#stageText').innerHTML = '<div class="big">'+i+'</div>'; await sleep(1000); }
+    } else {
+      await sleep(o.dur);
+    }
+    check(id);
+  }
+  const EXPLAIN = {
+    breath: {
+      title: 'Why does a deep breath cause a response?',
+      markers: ['Deep breath'],
+      look: 'Look for a bump starting 1–3 seconds after it.',
+      body: [
+        'Taking a very deep breath and then breathing out triggers a brief burst of activity across your whole sympathetic nervous system. Your sweat glands are part of that system, so they become a little more active. The extra sweat makes your skin conduct electricity slightly better, and the sensors pick that up as a bump.'
+      ]
+    },
+    surprise: {
+      title: 'Why does a sudden noise cause a response?',
+      markers: ['Loud noise'],
+      look: 'This is often the biggest bump of the whole run.',
+      body: [
+        'Your brain is always listening out for danger, even when you are relaxed. A loud sound that starts suddenly is one of the strongest danger signals there is.',
+        'Before you have even worked out what the sound was, a fast circuit in your brainstem sets off the <em>startle reflex</em>. You blink, your muscles tense and your sympathetic nervous system fires, reaching your sweat glands. This happens in a fraction of a second, without you deciding anything.',
+        'In terms of evolution, this makes sense. Jumping at a snapping twig that turns out to be nothing costs very little. Ignoring the one that turns out to be a predator could cost you everything.',
+        'If we played the noise again and again, your response would get smaller each time. This is called <em>habituation</em>: your brain learns the sound is harmless and stops reacting so strongly.'
+      ]
+    },
+    maths: {
+      title: 'Why does a maths test that never happened cause a response?',
+      markers: ['Maths test announced', 'Just kidding (relief)'],
+      look: 'Look for a bump just after the announcement, then a slow climb during the countdown that levels off or falls after “just kidding”.',
+      body: [
+        'Nothing physical happened during the countdown. The only thing that changed was what you expected to happen next.',
+        'Being tested in front of someone is a kind of <em>social stress</em>. As soon as you read that it was coming, your brain started preparing your body to cope, and your sympathetic nervous system turned up. For many people the signal keeps creeping up as the countdown runs. This is <em>anticipation</em>, and it is the same reason your palms get sweaty before an exam or a performance.',
+        'When the test was cancelled, the threat disappeared and your body could start to settle, so the signal usually levels off and begins to fall.',
+        'One last thing. Skin conductance shows how strongly your body is reacting, but not which feeling caused it. Fear, excitement and embarrassment can all look the same. That is one reason “lie detectors”, which partly rely on this signal, are not a reliable way to tell if someone is lying.'
+      ]
+    }
+  };
+
+  async function explain(id, key){
+    check(id);
+    const e = EXPLAIN[key];
+    $('#exTitle').textContent = e.title;
+    $('#exBody').innerHTML = e.body.map(p => '<p>'+p+'</p>').join('');
+    const hits = e.markers.map(n => log.find(r => r.name === n)).filter(Boolean);
+    $('#exTrace').innerHTML = '<strong>On your trace:</strong> ' +
+      hits.map(r => r.name+' at <b>'+fmt(r.el)+'</b> run time ('+wall(r.w)+')').join('; ') + '. ' + e.look;
+    $('#run').hidden = true; $('#explain').hidden = false; window.scrollTo(0,0);
+    await new Promise(res => { const b = $('#nextBtn'); const h = () => { b.removeEventListener('click', h); res(); }; b.addEventListener('click', h); });
+    check(id);
+    $('#explain').hidden = true; $('#run').hidden = false; window.scrollTo(0,0);
+  }
+
+  const recover = (id, dur) => phase(id, {tag:'Recover', title:'Relax. Breathe normally.', sub:'Keep the sensor hand still. Your response is showing up now.', dur, visual:'dot'});
+
+  const BLOCKS = {
+    settle: {label:'Settle', run: async id => {
+      await phase(id, {tag:'Settle', title:'Sit still and breathe normally', sub:'Recording a resting baseline.', dur:15000, visual:'dot'});
+    }},
+    breath: {label:'Breath', run: async id => {
+      await phase(id, {tag:'Deep breath', title:'Next: one big, sharp breath in', sub:'When the circle appears and grows, breathe in as fast and as deep as you can, then hold it until the screen says to breathe out.', dur:15000, visual:'hide'});
+      await phase(id, {tag:'Deep breath', title:'Get ready…', sub:'Fast, deep breath in when the circle grows. Then hold.', dur:3000, count:true});
+      mark('Deep breath');
+      await phase(id, {tag:'Deep breath', title:'Breathe IN, deep and fast', dur:2500, visual:'in'});
+      await phase(id, {title:'Hold it', dur:3000, visual:'hold'});
+      await phase(id, {title:'Breathe out slowly', dur:4000, visual:'out'});
+      await recover(id, 20000);
+      await explain(id, 'breath');
+    }},
+    maths: {label:'Maths', run: async id => {
+      await phase(id, {tag:'Settle', title:'Sit still and breathe normally', sub:'', dur:8000, visual:'dot'});
+      mark('Maths test announced');
+      await phase(id, {tag:'Mental maths', title:'Last one: a maths test, out loud', sub:'When the countdown ends, look up at the demonstrator and count backwards from 1,000 in steps of 7, saying each answer out loud to them, as fast as you can. They will check your answers.', dur:15000, count:true});
+      mark('Just kidding (relief)');
+      await phase(id, {tag:'Mental maths', title:'Just kidding! We wouldn’t make you do that!', sub:'', dur:25000, visual:'hide'});
+      await explain(id, 'maths');
+    }},
+    surprise: {label:'Relax', run: async id => {
+      const wait = 6000 + Math.random()*8000;
+      await phase(id, {tag:'Relax', title:'Rest your eyes on the dot', sub:'Nothing to do. Just keep still.', dur:wait, visual:'dot', hideBar:true});
+      noiseBurst(0.5); flash(); mark('Loud noise');
+      await phase(id, {tag:'Recover', title:'Sorry about that.', sub:'', dur:20000, visual:'dot'});
+      await explain(id, 'surprise');
+    }},
+    clap: {label:'Wait', run: async id => {
+      const wait = 6000 + Math.random()*8000;
+      await phase(id, {tag:'Relax', title:'Rest your eyes on the dot', sub:'Nothing to do. Just keep still.', dur:wait, visual:'dot', hideBar:true});
+      mark('Name-call / clap');
+      await phase(id, {tag:'Presenter', title:'', dur:2500, hideBar:true, stage:'<div class="big" style="color:var(--alarm)">NOW</div><div class="tag">clap or say their name</div>'});
+      await recover(id, 20000);
+    }}
+  };
+
+  async function run(keys){
+    const id = ++runId;
+    audioInit();
+    try{ if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
+    log = []; t0 = performance.now(); startClock();
+    $('#marker').textContent = '';
+    $('#intro').hidden = true; $('#done').hidden = true; $('#explain').hidden = true; $('#run').hidden = false; $('#stopBtn').hidden = false;
+    const steps = $('#steps');
+    steps.innerHTML = keys.map(k => '<li>'+BLOCKS[k].label+'</li>').join('');
+    window.scrollTo(0,0);
+    try{
+      for(let i=0;i<keys.length;i++){
+        [...steps.children].forEach((li,j)=> li.className = j<i ? 'done' : j===i ? 'now' : '');
+        await BLOCKS[keys[i]].run(id);
+      }
+      finish(id);
+    }catch(e){ if(e !== 'stopped') throw e; }
+  }
+  function finish(id){
+    if(id !== runId) return;
+    cancelAnimationFrame(raf);
+    $('#run').hidden = true; $('#stopBtn').hidden = true; $('#done').hidden = false;
+    $('#logBody').innerHTML = log.length ? log.map((r,i)=>'<tr><td class="num">'+(i+1)+'</td><td>'+r.name+'</td><td class="num">'+fmt(r.el)+'</td><td class="num">'+wall(r.w)+'</td></tr>').join('')
+      : '<tr><td colspan="4">No events were marked.</td></tr>';
+    releaseWake();
+  }
+  function releaseWake(){ try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock = null; }
+  function stop(){
+    runId++; clearInterval(tickTimer); cancelAnimationFrame(raf); releaseWake();
+    $('#run').hidden = true; $('#explain').hidden = true; $('#done').hidden = true; $('#intro').hidden = false; $('#stopBtn').hidden = true;
+    $('#clock').innerHTML = '<span>RUN</span>00:00.0';
+  }
+
+  let lastKeys = null;
+  function fullRun(){ const k = ['settle','breath']; if($('#optNoise').checked) k.push('surprise'); k.push('maths'); lastKeys = k; run(k); }
+
+  $('#startBtn').addEventListener('click', fullRun);
+  $('#againBtn').addEventListener('click', () => run(lastKeys || ['settle','breath','surprise','maths']));
+  $('#homeBtn').addEventListener('click', stop);
+  $('#stopBtn').addEventListener('click', stop);
+  $('#testBtn').addEventListener('click', () => {
+    audioInit(); tone(660, 0.25, 0.2); setTimeout(()=>tone(880, 0.3, 0.2), 280);
+    $('#testHint').textContent = 'You should have heard two soft notes. If not, check the volume and silent mode.';
+  });
+  document.querySelectorAll('[data-solo]').forEach(b => b.addEventListener('click', () => {
+    lastKeys = ['settle', b.dataset.solo];
+    run(lastKeys);
+  }));
+  document.addEventListener('visibilitychange', async () => {
+    if(document.visibilityState === 'visible' && !$('#run').hidden){ try{ if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){} }
+  });
+})();
+</script>
+
+</body>
+</html>
