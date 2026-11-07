@@ -72,12 +72,6 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     <p class="lead" style="margin-top:10px">Our setup uses three electrodes. Two of them measure the voltage difference between their positions on your body, and the third acts as a reference. Together they give one view of the heart’s electrical activity, like the trace below.</p>
   </header>
 
-  <section class="video">
-    <h2>Watch the cardiac cycle</h2>
-    <div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/IS9TD9fHFv0" title="The Cardiac Cycle, Animation, by Alila Medical Media" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
-    <p class="note">Video: “The Cardiac Cycle, Animation” by Alila Medical Media, on YouTube.</p>
-  </section>
-
   <section class="fig" aria-label="Animated heart and ECG trace">
     <div class="heartbox">
     <svg class="heart" id="heart" viewBox="0 0 240 262" role="img" aria-label="Heart seen from the front. Blue shows the right side, which receives blood from the body; red shows the left side, which pumps blood out to the body. The muscle wall lights up as the electrical signal switches it on and then resets it.">
@@ -160,7 +154,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       <p class="caption" id="caption" aria-live="polite"></p>
       <div class="controls">
         <button id="play">Pause</button>
-        <span class="note">Slowed down about 10×</span>
+        <span class="note">Slowed down about 25×</span>
       </div>
     </div>
   </section>
@@ -174,12 +168,18 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     <li><button data-k="6"><span class="n">6</span><span><strong>Rest</strong><span class="t">The whole heart is reset and waits for the next signal from the SA node.</span></span></button></li>
   </ol>
 
+  <section class="video">
+    <h2>Watch the cardiac cycle</h2>
+    <div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/IS9TD9fHFv0" title="The Cardiac Cycle, Animation, by Alila Medical Media" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+    <p class="note">Video: “The Cardiac Cycle, Animation” by Alila Medical Media, on YouTube.</p>
+  </section>
+
 </div>
 
 <script>
 (function(){
   const $ = s => document.querySelector(s);
-  const W = 320, CYCLE = 8000;               // one beat across the trace; ~0.8 s in real life
+  const W = 320, CYCLE = 20000;               // one beat across the trace; ~0.8 s in real life
   const RANGES = {1:[40,72],2:[72,98],3:[98,122],4:[122,155],5:[155,205]};
   const clamp = v => Math.max(0, Math.min(1, v));
   const prog = (x,a,b) => clamp((x-a)/(b-a));
