@@ -99,6 +99,8 @@ tr:last-child td{border-bottom:none}
 .learn h2,.explain h2{font-size:clamp(24px,6.5vw,32px);line-height:1.15}
 .prose p{margin:0 0 12px;max-width:62ch}
 .prose p:last-child{margin-bottom:0}
+.prose ul{margin:0;padding-left:1.1em;display:grid;gap:12px;max-width:62ch}
+.prose li strong{color:var(--amber);font-weight:600}
 .prose em{font-style:normal;color:var(--amber)}
 .curve{width:100%;max-width:100%;height:auto;display:block;margin-block:4px 8px}
 .curve text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
@@ -126,8 +128,8 @@ tr:last-child td{border-bottom:none}
     <!-- INTRO -->
     <section class="intro" id="intro">
       <div>
-        <h1>Make your skin talk</h1>
-        <p class="lead">A short sequence, about 4 minutes, designed to make your skin conductance jump. Follow what the screen says and keep the sensor hand still.</p>
+        <h1>Electrodermal Activity Demonstration</h1>
+        <p class="lead">A 4-minute sequence of stimuli, each designed to elicit a skin conductance response. Follow the on-screen instructions and keep the sensor hand still.</p>
       </div>
       <div class="learn prose">
         <div class="tag">Read this while you get set up</div>
@@ -232,6 +234,15 @@ tr:last-child td{border-bottom:none}
           <thead><tr><th>#</th><th>Event</th><th>Run time</th><th>Clock</th></tr></thead>
           <tbody id="logBody"></tbody>
         </table>
+      </div>
+      <div class="learn prose">
+        <h2>Why measure it?</h2>
+        <p>Skin conductance shows how strongly the body reacts to something, without relying on what people say. Researchers use it to ask questions like:</p>
+        <ul>
+          <li><strong>What grabs our attention?</strong> Responses are bigger to things that are new, surprising or personally important, and get smaller as something becomes familiar.</li>
+          <li><strong>What do we fear?</strong> People with a strong fear of spiders respond more to pictures of spiders than to other pictures (Öhman &amp; Soares, 1994).</li>
+          <li><strong>What can it tell us about mental health?</strong> It allows researchers to investigate how conditions such as anxiety and PTSD might affect the way we learn and unlearn fear. For example, if a harmless signal is repeatedly paired with something unpleasant, the skin will eventually start to respond to the signal on its own. Normally, this response gradually fades when the signal is repeatedly presented without the unpleasant event. However, one study found that people with PTSD continued to show a response to the signal, whereas trauma-exposed people without PTSD did not (Orr et al., 2000).</li>
+        </ul>
       </div>
       <div class="actions">
         <button id="homeBtn">Back</button>
